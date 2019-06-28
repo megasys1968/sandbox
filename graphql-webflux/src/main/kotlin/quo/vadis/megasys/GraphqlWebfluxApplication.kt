@@ -26,13 +26,13 @@ class GraphqlWebfluxApplication(val userRepo: UserRepository) : CommandLineRunne
   }
 
   @Bean
-  fun graphql(appContext: ApplicationContext, resolvers : List<GraphQLResolver<*>> ): GraphQL {
+  fun graphql(appContext: ApplicationContext, resolvers: List<GraphQLResolver<*>>): GraphQL {
     val builder = SchemaParserBuilder()
 
     val schemas: List<String> = appContext
       .getResources("classpath*:/graphql/*.graphqls")
       .map { StreamUtils.copyToString(it.inputStream, StandardCharsets.UTF_8) }
-      .onEach {builder.schemaString(it) }
+      .onEach { builder.schemaString(it) }
       .toList()
 
     val schemaParser = builder.resolvers(resolvers).build();
@@ -44,12 +44,12 @@ class GraphqlWebfluxApplication(val userRepo: UserRepository) : CommandLineRunne
 }
 
 fun main(args: Array<String>) {
-	runApplication<GraphqlWebfluxApplication>(*args)
+  runApplication<GraphqlWebfluxApplication>(*args)
 }
 
 
 @Entity
-data class User (
+data class User(
   @field:Id
   @field:GeneratedValue
   var id: Int = -1,
@@ -60,9 +60,9 @@ interface UserRepository : JpaRepository<User, Int>
 
 @Component
 class QueryResolver(val userRepo: UserRepository) : GraphQLQueryResolver {
-	fun users(): List<User> {
-		return userRepo.findAll()
-	}
+  fun users(): List<User> {
+    return userRepo.findAll()
+  }
 }
 
 @Component
@@ -71,7 +71,7 @@ class MutationResolver(val userRepo: UserRepository) : GraphQLMutationResolver {
     try {
       userRepo.save(User(name = name))
       return true
-    } catch(e: Exception) {
+    } catch (e: Exception) {
       return false
     }
 

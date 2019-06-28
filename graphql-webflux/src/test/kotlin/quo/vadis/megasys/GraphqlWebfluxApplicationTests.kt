@@ -17,8 +17,8 @@ class GraphqlWebfluxApplicationTests {
   @Autowired
   lateinit var context: ApplicationContext
 
-	@Test
-	fun query() {
+  @Test
+  fun query() {
     val client = WebTestClient.bindToApplicationContext(context).build()
     client
       .post()
@@ -36,7 +36,7 @@ class GraphqlWebfluxApplicationTests {
       .returnResult().toString().let {
         println(it)
       }
-	}
+  }
 
   @Test
   fun mutation() {
@@ -47,13 +47,14 @@ class GraphqlWebfluxApplicationTests {
       .contentType(MediaType.parseMediaType("application/graphql"))
       .body(BodyInserters.fromObject("""
           mutation {
-            createUser(name: "ベス")
+            m1: createUser(name: "ベス")
+            m2: createUser(name: "カララ")
           }
         """.trimIndent()))
       .exchange()
       .expectStatus().isOk
       .expectBody()
-        .jsonPath("$.errors").doesNotExist()
+      .jsonPath("$.errors").doesNotExist()
       .returnResult().toString().let {
         println(it)
       }
@@ -61,8 +62,6 @@ class GraphqlWebfluxApplicationTests {
     query()
 
   }
-
-
 
 
 }
