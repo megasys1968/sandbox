@@ -8,5 +8,5 @@ type Query {
 }
 
 type Mutation {
-  createUser(name: String): Boolean
+  createUser(name: String): User
 }

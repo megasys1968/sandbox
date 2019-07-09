@@ -4,7 +4,10 @@ import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import com.coxautodev.graphql.tools.GraphQLQueryResolver
 import com.coxautodev.graphql.tools.GraphQLResolver
 import com.coxautodev.graphql.tools.SchemaParserBuilder
+import graphql.ErrorType
 import graphql.GraphQL
+import graphql.GraphQLError
+import graphql.language.SourceLocation
 import org.apache.commons.lang3.StringUtils
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.SpringBootApplication
@@ -15,6 +18,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Component
 import org.springframework.util.StreamUtils
 import java.nio.charset.StandardCharsets
+import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.GeneratedValue
 import javax.persistence.Id
@@ -53,6 +57,7 @@ data class User(
   @field:Id
   @field:GeneratedValue
   var id: Int = -1,
+  @field:Column(unique = true)
   var name: String = StringUtils.EMPTY)
 
 interface UserRepository : JpaRepository<User, Int>
@@ -67,13 +72,12 @@ class QueryResolver(val userRepo: UserRepository) : GraphQLQueryResolver {
 
 @Component
 class MutationResolver(val userRepo: UserRepository) : GraphQLMutationResolver {
-  fun createUser(name: String): Boolean {
+  fun createUser(name: String): User {
     try {
-      userRepo.save(User(name = name))
-      return true
+      return userRepo.save(User(name = name))
     } catch (e: Exception) {
-      return false
+      throw GraphQLException(e.message, mapOf("name" to name))
     }
-
   }
 }
+

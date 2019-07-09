@@ -47,8 +47,14 @@ class GraphqlWebfluxApplicationTests {
       .contentType(MediaType.parseMediaType("application/graphql"))
       .body(BodyInserters.fromObject("""
           mutation {
-            m1: createUser(name: "ベス")
-            m2: createUser(name: "カララ")
+            m1: createUser(name: "ベス") {
+              id
+              name
+            }
+            m2: createUser(name: "カララ") {
+              id
+              name
+            }
           }
         """.trimIndent()))
       .exchange()
@@ -63,5 +69,27 @@ class GraphqlWebfluxApplicationTests {
 
   }
 
-
+  @Test
+  fun mutation例外() {
+    val client = WebTestClient.bindToApplicationContext(context).build()
+    client
+      .post()
+      .uri("/api/v1")
+      .contentType(MediaType.parseMediaType("application/graphql"))
+      .body(BodyInserters.fromObject("""
+          mutation {
+            createUser(name: "ギジェ") {
+              id
+              name
+            }
+          }
+        """.trimIndent()))
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.errors[0].extensions.name").value<String> { it == "ギジェ" }
+      .returnResult().toString().let {
+        println(it)
+      }
+  }
 }
