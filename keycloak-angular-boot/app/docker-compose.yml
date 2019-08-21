@@ -5,5 +5,3 @@ services:
       context: .
     container_name: app
     network_mode: host
-    ports:
-      - 50010:8080
