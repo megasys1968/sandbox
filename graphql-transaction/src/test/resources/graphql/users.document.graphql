@@ -1,0 +1,11 @@
+query Users {
+  users {
+    userId
+    userName
+    groups {
+      groupId
+      groupName
+    }
+  }
+}
+

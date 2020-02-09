@@ -1,0 +1,26 @@
+# ユーザ
+type UserModel {
+  # ユーザID
+  userId: ID!
+  # ユーザ名
+  userName: String!
+  # グループ
+  groups: [GroupModel!]
+}
+
+#
+type GroupModel {
+  # グループID
+  groupId: ID!
+  # グループ名
+  groupName: String!
+}
+
+# Query
+type Query {
+
+  """
+  ユーザ一覧
+  """
+  users: [UserModel!]
+}
