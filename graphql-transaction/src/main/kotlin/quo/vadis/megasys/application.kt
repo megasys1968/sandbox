@@ -13,7 +13,7 @@ import graphql.schema.DataFetchingEnvironment
 import graphql.servlet.context.DefaultGraphQLServletContext
 import graphql.servlet.context.DefaultGraphQLServletContextBuilder
 import graphql.servlet.context.DefaultGraphQLWebSocketContext
-import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.RandomUtils
 import org.dataloader.DataLoader
 import org.dataloader.DataLoaderOptions
 import org.dataloader.DataLoaderRegistry
@@ -23,65 +23,15 @@ import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
-import org.springframework.data.jpa.repository.JpaRepository
-import org.springframework.orm.jpa.JpaTransactionManager
 import org.springframework.stereotype.Component
 import org.springframework.transaction.PlatformTransactionManager
-import org.springframework.transaction.TransactionManager
 import org.springframework.transaction.support.TransactionTemplate
-import java.io.Serializable
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicLong
-import javax.persistence.*
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import javax.websocket.Session
 import javax.websocket.server.HandshakeRequest
-
-@Entity
-data class UserModel(
-  // ユーザID
-  @Id
-  @GeneratedValue
-  var userId: Int = -1,
-  // ログインID
-  var userName: String = StringUtils.EMPTY
-)
-
-@Entity
-data class GroupModel(
-  // グループID
-  @Id
-  @GeneratedValue
-  var groupId: Int = -1,
-  // グループ名
-  var groupName: String = StringUtils.EMPTY
-)
-
-
-@Embeddable
-data class UserGroupKey(
-  // ユーザID
-  var userId: Int = -1,
-
-  // グループID
-  var groupId: Int = -1
-): Serializable
-
-@Entity
-data class UserGroupModel(
-  @EmbeddedId
-  var key: UserGroupKey = UserGroupKey()
-)
-
-interface UserRepository: JpaRepository<UserModel, Int>
-interface GroupRepository: JpaRepository<GroupModel, Int>
-interface UserGroupRepository: JpaRepository<UserGroupModel, UserGroupKey> {
-  fun findByKeyUserIdIn(userId: Collection<Int>): List<UserGroupModel>
-}
 
 @SpringBootApplication
 class GraphqlTransactionApplication : GraphQLQueryResolver, ApplicationRunner {
@@ -95,11 +45,8 @@ class GraphqlTransactionApplication : GraphQLQueryResolver, ApplicationRunner {
   @Autowired
   lateinit var transactionTemplate: TransactionTemplate
 
-  val counter = AtomicInteger()
-
   fun users(): List<UserModel> {
-    val flag = counter.incrementAndGet() % 2
-    Thread.sleep(if (1 == flag) 10000 else 3000)
+    Thread.sleep(RandomUtils.nextLong(100, 3000))
     return userRepo.findAll()
   }
 
@@ -139,22 +86,26 @@ class GraphqlTransactionInstrumentation(private val transactionManager: Platform
 
     val status = this.transactionManager.getTransaction(tx)
 
-//    return SimpleInstrumentationContext.whenDispatched { codeToRun ->
-//      codeToRun.join()
-//      if (codeToRun.isCompletedExceptionally) {
-//        this.transactionManager.rollback(status)
-//      } else {
-//        this.transactionManager.commit(status)
-//      }
-//    }
-
-    return SimpleInstrumentationContext.whenCompleted { _, e ->
-      if (e != null) {
+    return SimpleInstrumentationContext.whenDispatched { codeToRun ->
+      codeToRun.join()
+      if (codeToRun.isCompletedExceptionally) {
         this.transactionManager.rollback(status)
       } else {
         this.transactionManager.commit(status)
       }
     }
+
+//    return SimpleInstrumentationContext.whenCompleted { _, e ->
+//      if (threadId != Thread.currentThread().id) {
+//        println()
+//      }
+//
+//      if (e != null) {
+//        this.transactionManager.rollback(status)
+//      } else {
+//        this.transactionManager.commit(status)
+//      }
+//    }
 
   }
 }
@@ -172,6 +123,8 @@ class UserModelGraphQLResolver(): GraphQLResolver<UserModel> {
 @Component
 class UserGroupDataLoader(val userGroupRepo: UserGroupRepository, val groupRepo: GroupRepository) : MappedBatchLoader<Int, List<GroupModel>> {
   override fun load(keys: MutableSet<Int>): CompletionStage<MutableMap<Int, List<GroupModel>>> {
+    Thread.sleep(RandomUtils.nextLong(100, 3000))
+
     val userGroups = userGroupRepo.findByKeyUserIdIn(keys)
 
     val groups = groupRepo.findAllById(userGroups.map { it.key.groupId }.toSet()).map { it.groupId to it }.toMap()
@@ -181,7 +134,7 @@ class UserGroupDataLoader(val userGroupRepo: UserGroupRepository, val groupRepo:
       .map { entry -> entry.key to entry.value.map { groups[it.key.groupId]!! } }
       .toMap().toMutableMap()
 
-    return CompletableFuture.completedStage(result)
+    return CompletableFuture.completedFuture(result)
   }
 }
 
@@ -202,7 +155,6 @@ class GraphQLContextBuilder(val mappedBatchLoaders: List<MappedBatchLoader<*, *>
 
   final fun dataLoaderRegistry(): DataLoaderRegistry {
     val registry = DataLoaderRegistry()
-
     mappedBatchLoaders
       .forEach {
         registry.register(it::class.simpleName, DataLoader.newMappedDataLoader(it, DataLoaderOptions.newOptions().setCachingEnabled(false)))
