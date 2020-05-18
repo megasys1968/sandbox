@@ -1,0 +1,14 @@
+
+spring:
+  h2:
+    console:
+      enabled: true
+  thymeleaf:
+    cache: false
+
+logging:
+  level:
+    org:
+      jooq: DEBUG
+      hibernate:
+        SQL: DEBUG

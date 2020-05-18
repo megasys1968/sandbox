@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ja"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width">
+
+  <title>業務システム</title>
+
+  <link rel="stylesheet"
+        href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+        crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <style>
+    body {
+      min-height: 75rem;
+      padding-top: 4rem;
+    }
+
+
+  </style>
+
+</head>
+
+<body>
+
+<nav class="navbar navbar-expand navbar-dark bg-primary fixed-top">
+  <a class="navbar-brand" href="/">業務システム
+  </a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse"
+          aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarCollapse">
+    <ul class="navbar-nav mr-auto">
+      <a class="nav-link active" th:href="@{/personal}">申請</a>
+      <a class="nav-link active" th:href="@{/personal/history}">承認</a>
+    </ul>
+
+  </div>
+</nav>
+
+<main class="container-fluid">
+  <div class="row">
+    <div class="col">
+
+      <div class="card">
+        <div class="card-header bg-success text-white pt-1 pb-1">
+          請求書
+          <a class="btn float-right p-0" data-toggle="modal" data-target="#createInvoiceModal">
+            <span class="material-icons">create_new_folder</span>
+          </a>
+        </div>
+
+        <div class="card-body">
+
+          <table class="table table-striped table-hover">
+            <tr>
+              <th>ID</th>
+              <th>請求書名</th>
+              <th colspan="2"></th>
+            </tr>
+            <tr th:each="invoice : ${invoices}">
+              <td th:text="${invoice.invoiceId}" class="invoiceId">123</td>
+              <td th:text="${invoice.invoiceTitle}" class="invoiceTitle">文房具</td>
+              <td>
+                <a class="btn text-info p-0" data-toggle="modal" data-target="#updateInvoiceModal"
+                  data-id="123" th:data-id="${invoice.invoiceId}">
+                  <span class="material-icons">edit</span>
+                </a>
+              </td>
+              <td>
+                <form method="post" action="/invoices/delete" onsubmit="return confirmDelete()">
+                  <input type="hidden" name="invoiceId" th:value="${invoice.invoiceId}">
+                  <button type="submit" class="btn text-danger p-0">
+                    <span class="material-icons">delete</span>
+                  </button>
+                </form>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="modal fade" id="createInvoiceModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="/invoices">
+        <div class="modal-header bg-success">
+          <h5 class="modal-title text-white">新規請求書</h5>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="createInvoiceTitle">請求書名</label>
+            <input type="text" class="form-control" id="createInvoiceTitle" name="invoiceTitle"
+                   required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
+          <button type="submit" class="btn btn-primary">作成</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="updateInvoiceModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="/invoices/update">
+        <div class="modal-header bg-success">
+          <h5 class="modal-title text-white">請求書更新</h5>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="updateInvoiceTitle">請求書ID</label>
+            <input type="text" class="form-control" id="updateInvoiceId" name="invoiceId" required
+                   readonly>
+          </div>
+          <div class="form-group">
+            <label for="updateInvoiceTitle">請求書名</label>
+            <input type="text" class="form-control" id="updateInvoiceTitle" name="invoiceTitle"
+                   required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
+          <button type="submit" class="btn btn-primary">作成</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+
+<script type="text/javascript">
+function confirmDelete() {
+	if(window.confirm('削除してよろしいですか？')) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+$('#updateInvoiceModal').on('show.bs.modal', function (event) {
+  var button = $(event.relatedTarget)
+  var invoiceId = button.data('id')
+
+  var modal = $(this)
+  modal.find('#updateInvoiceId').val(invoiceId)
+
+  var invoiceTitle = $(`td.invoiceId:contains(${invoiceId})`).parents('tr').find('td.invoiceTitle').text()
+  modal.find('#updateInvoiceTitle').val(invoiceTitle)
+})
+
+</script>
+
+</body>
+</html>
